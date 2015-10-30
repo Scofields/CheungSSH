@@ -115,7 +115,7 @@ def download_file(request):
 	else:
 		info["msgtype"]='OK'
 		server_head=request.META['HTTP_HOST']
-		info["url"]="http://%s/cheungssh/download/%s" % (server_head,downfile)
+		info["url"]="http://%s/download/%s" % (server_head,downfile)
 		
 
 
@@ -724,3 +724,5 @@ def sshcheck(request):
 	else:
 		info="%s(%s)"  % (callback,info)
 	return HttpResponse(info)
+def cheungssh_index_redirect(request):
+	return HttpResponseRedirect('/cheungssh/')
