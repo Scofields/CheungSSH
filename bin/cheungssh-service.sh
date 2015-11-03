@@ -1,6 +1,8 @@
 #!/bin/bash
 setenforce 0
 start(){
+	echo  "关闭防火墙"
+	service iptables stop
 	nohup python /home/cheungssh/bin/websocket_server_cheung.py >>/home/cheungssh/logs/web_run.log  2>&1 &
 	service mysqld  start &&
 	/home/cheungssh/redis-3.0.4/src/redis-server /home/cheungssh/conf/redis.conf   &&

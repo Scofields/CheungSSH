@@ -2,7 +2,6 @@
 #Author=Cheung Kei-Chuen
 #QQ群=445342415
 #coding:utf-8
-V=2.0.1
 #如果您在使用过程中，遇到了一点点的问题，我都真诚希望您能告诉我！为了改善这个软件， 方便您的工作#
 export LANG=zh_CN.UTF-8
 if [ `id -u` -ne 0 ]
@@ -100,7 +99,7 @@ echo $netinstall|grep -iE '^n' -q
 if [ $? -ne 0 ]
 then
 	echo  "使用Yum安装..."
-	yum install  -y gcc python-devel openssl-devel mysql-devel  swig httpd httpd-devel python-pip libevent-devel 
+	yum install  -y gcc python-devel openssl-devel mysql-devel  swig httpd httpd-devel python-pip libevent-devel  mariadb-devel
 	if  [ $? -ne 0 ]
 	then
 		echo "安装失败,重试中...."
@@ -108,33 +107,36 @@ then
 		/bin/cp  -f /home/cheungssh/conf/*repo  /etc/yum.repos.d/
 		yum clear all && yum makecache
 		echo  "重装yum..."
-		yum install  -y gcc python-devel openssl-devel mysql-devel  swig httpd httpd-devel python-pip libevent-devel  --skip-broken
+		yum install  -y gcc python-devel openssl-devel mysql-devel  swig httpd httpd-devel python-pip libevent-devel mariadb-devel  --skip-broken
 		if  [ $? -ne 0 ]
 		then
 			echo  "Yum安装又失败了"
 			exit 1
 		fi
 	fi
-	if [ `rpm -qa|grep -Eo 'gcc|python-devel|openssl-devel|mysql-devel|swig|httpd|httpd-devel|libevent-devel'|sort|uniq|wc -l` -lt 8 ]
+	if [ `rpm -qa|grep -Eo 'mariadb-devel|gcc|python-devel|openssl-devel|mysql-devel|swig|httpd|httpd-devel|libevent-devel'|sort|uniq|wc -l` -lt 8 ]
 	then
 		echo  "更新Yum...."
 		/bin/cp  -f /home/cheungssh/conf/*repo  /etc/yum.repos.d/
 		yum clear all && yum makecache
 		echo  "重装yum..."
 		yum install  -y gcc python-devel openssl-devel mysql-devel  swig httpd httpd-devel python-pip libevent-devel --skip-broken
-		if [ `rpm -qa|grep -Eo 'gcc|python-devel|openssl-devel|mysql-devel|swig|httpd|httpd-devel|libevent-devel'|sort|uniq|wc -l` -lt 8 ]
+		if [ `rpm -qa|grep -Eo 'mariadb-devel|gcc|python-devel|openssl-devel|mysql-devel|swig|httpd|httpd-devel|libevent-devel'|sort|uniq|wc -l` -lt 8 ]
 		then
 			echo "有些包不能安装上...如下:"
-			a="gcc python-devel openssl-devel mysql-devel swig httpd httpd-devel libevent-devel"
 			for b in $a
 			do
-				rpm -qa|grep $b
+				if [ $b == "mariadb-devel" ]  || [ $b == "mysql-devel" ]
+				then
+					rpm -qa|grep -E 'mysql-devel|mariadb-devel'
+				else
+					rpm -qa|grep $b
+				fi
 				if  [ $? -ne 0 ]
 				then
 					echo "$b 不存在"
 					exit 1
 				fi
-			done
 			exit
 		fi
 	fi
@@ -168,7 +170,7 @@ then
 		fi
 	fi
 	echo "使用pip安装"
-	pip install    MySQL-python paramiko hashlib django-redis django-redis-cache  redis   pycrypto-on-pypi  django-cors-headers setuptools
+	pip install    MySQL-python paramiko hashlib django-redis django-redis-cache  redis   pycrypto-on-pypi  django-cors-headers
 	if  [ $? -ne 0 ]
 	then
 		echo "安装失败,如果错误信息是 time out 可能是您的网络不好导致的，请重试安装即可"
@@ -264,7 +266,7 @@ EOF
 			exit 1
 		fi
 		echo -e "Mysql服务器已经安装完毕\n正在尝试启动Mysql服务器..."
-		if [ -f /etc/init.d/mysql ] && [ ! -f /etc/init.d/mysqld ]
+		if [ -f /etc/init.d/mysql ] && [! -f /etc/init.d/mysqld ]
 		then
 			/bin/mv /etc/init.d/mysql /etc/init.d/mysqld
 		fi
@@ -303,19 +305,11 @@ EOF
 		echo "初始化数据库完成"
 	fi
 	########3
-	APXS=`which apxs`
-	APXS=${APXS:-/usr/sbin/apxs}
-	if [ ! -f $APXS ]
-	then
-		echo  "没有apxs文件"
-		exit 1
-	fi
-	PYTHON=`wich python`
 	echo "开始安装mod_python"
 	cd /home/cheungssh/soft &&
 	tar xvf  mod_python-3.4.1.tgz  &&
 	cd  mod_python-3.4.1        &&
-	./configure    --with-apxs=$APXS    --with-python=$PYTHON   &&
+	./configure    --with-apxs=/usr/sbin/apxs    --with-python=/usr/bin/python   &&
 	make && make install
 	if  [ $? -ne 0 ]
 	then
